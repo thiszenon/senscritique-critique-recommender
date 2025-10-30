@@ -1,0 +1,8 @@
+Collecting faiss-cpu
+  Downloading faiss_cpu-1.12.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (5.1 kB)
+Requirement already satisfied: numpy<3.0,>=1.25.0 in /usr/local/python/3.12.1/lib/python3.12/site-packages (from faiss-cpu) (1.26.4)
+Requirement already satisfied: packaging in /home/codespace/.local/lib/python3.12/site-packages (from faiss-cpu) (25.0)
+Downloading faiss_cpu-1.12.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (31.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━ 31.4/31.4 MB 62.9 MB/s  0:00:00
+Installing collected packages: faiss-cpu
+Successfully installed faiss-cpu-1.12.0

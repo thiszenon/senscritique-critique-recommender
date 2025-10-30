@@ -22,7 +22,7 @@ def analyze_csv_structure():
 
         try:
             with open(csv_file, 'r', encoding='utf-8') as file:
-                # Lecture de tout le fichier pour l'analyse
+                # Lecture du fichier pour l'analyse
                 lines = file.readlines() 
                 print(f"Nombre total de lignes: {len(lines)}") 
                 print(f" En-têtes: {lines[0].strip()}")
