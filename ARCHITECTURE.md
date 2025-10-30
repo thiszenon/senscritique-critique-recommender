@@ -1,7 +1,7 @@
 # Architecture Système 
 
 ## DIAGRAMME DE L'ARCHITECTURE
-![System Design](dosc/architecture.png)
+![System Design](docs/architecture.png)
 
 ## MODULES METIER
 ### MODULE 1: Traitement des données

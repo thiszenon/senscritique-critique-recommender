@@ -4,7 +4,7 @@
 Système de recommandation de critiques similaires pour SensCritique. 
 
 ## Architecture 
-![System Design](docs/system_design.png)
+![System Design](docs/architecture.png)
 
 ## Installation 
 ```bash
