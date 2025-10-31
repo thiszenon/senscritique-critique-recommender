@@ -21,7 +21,7 @@ def clean_critiques_data(csv_path,film_name):
     Args: 
         - csv_path: le chemin du fichier brute csv
         - film_name: le titre du film
-    return: df_clean : un dataFrame 
+    return: dataF_clean : le dataFrame nettoyé 
 
     """
     try:

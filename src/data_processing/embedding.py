@@ -1,6 +1,6 @@
 
 """
-Ici , on genere les vecteus (embeddings) pour les critiques de films
+Ici , on genere les vecteurs  (embedding) pour les critiques de films
 Docs : https://www.sbert.net/
 Auteur: Jo Kabonga
 Date: 30/10/2025
@@ -38,7 +38,7 @@ class Embedding:
         Args:
             model_name:nom du modèle sentence-transformers.
                 - all-MiniLM-L6-v2 : équilibré, rapide, bon pour le français et l'anglais
-                - dimensions: 384 bonne précision
+                - dimensions: 384, bonne précision
 
         """
         try:
@@ -59,7 +59,7 @@ class Embedding:
         Args:
             texts (list): liste des textes à encoder
             batch_size(int): taille des lots, limiter à 32 pour la memoire
-            show_progress (bool): afficher une barre de progress
+            show_progress (bool): afficher une barre de progression
 
         Returns: 
             np.array : matrice des vecteurs de n_texts,dim_embeddings
@@ -77,12 +77,12 @@ class Embedding:
                 texts,
                 batch_size=batch_size,
                 show_progress_bar = show_progress,
-                convert_to_tensor = False, # retourner au format numpy array pour utiliser FAISS
+                convert_to_tensor = False, # retourner au format numpy array pour utiliser FAISS(ou pas depend de la taille des données)
                 normalize_embeddings = True # pour la similarité cosinus
             )
             logger.info(f"Vecteurs générés: {embeddings.shape}")
-
             return embeddings
+        
         except Exception as ex:
             logger.error(f"erreur de la generation des vecteurs: {ex}")
             raise
@@ -100,7 +100,7 @@ class Embedding:
             tuple:(DataFrame avec les vecteurs, matrices d'emeddings)
         """
         try:
-            #verifier de la colonne texte
+            #verifier  la colonne texte
             if text_column not in dataF.columns:
                 raise ValueError(f"colonne '{text_column}' non trouvée dans le DataF ")
             #end if
@@ -109,14 +109,14 @@ class Embedding:
             texts = dataF[text_column].tolist()
 
             logger.info(f"Traitement du dataF: {len(dataF)} lignes, colonne'{text_column}")
-            embeddings = self.embeddings_generer(texts=texts)
+            embeddings = self.embeddings_generer(texts=texts) # appel de la méthode embeddings_generer
             
             # ajouter les vecteurs au dataF
-            dataF_embeddings = dataF.copy()
-            dataF_embeddings['embedding'] = list(embeddings)
+            dataF_embeddings = dataF.copy() # copie du dataF original
+            dataF_embeddings['embedding'] = list(embeddings) #ajouter une colonne 'embedding' au dataF
 
-            logger.info(f"dataF mis à jour : {len(dataF_embeddings)} lignes avec les vecteurs")
-            return dataF_embeddings,embeddings
+            logger.info(f"dataF mis à jour(dataF -> dataF_embeddings) : {len(dataF_embeddings)} lignes avec les vecteurs")
+            return dataF_embeddings,embeddings 
         except Exception as ex:
             logger.error(f"ereur du traitement du dataF: {ex}")
             raise
@@ -136,7 +136,7 @@ def main():
 
         # initialisation du model 
         logger.info("Initialisation du model")
-        embeddings_generer = Embedding() # appel de la classe 
+        embeddings_generer = Embedding() # appel de la classe Remrq:embeddings_generer nom de la variable. 
 
         #génération des vecteurs
         logger.info("génération des vecteurs")
@@ -148,8 +148,9 @@ def main():
 
         #sauvegarde
         logger.info("Sauvegarde des resultats")
-        output_dir = Path("../../data/processed")
+        output_dir = Path("../../data/processed") # lieu de la sauvegarde 
         output_dir.mkdir(exist_ok=True)
+
         dataF_fightclub_emb.to_pickle(output_dir/"fightclub_avec_embeddings.pkl")
         dataF_interstellar_emb.to_pickle(output_dir/"interstellar_avec_embeddings.pkl")
 
@@ -157,7 +158,7 @@ def main():
         np.save(output_dir/"fightclub_avec_embeddings.npy",emb_fightclub)
         np.save(output_dir/ "interstellar_avec_embeddings.npy", emb_interstellar)
 
-        """TODO: RAPPORT FINAL"""
+        """TODO: Jo, n'oublie pas de faire le RAPPORT FINAL"""
         logger.info(f" Fight club: {len(dataF_fightclub_emb)} critiques -> {emb_fightclub.shape}")
         logger.info(f" Interstellar: {len(dataF_interstellar_emb)} critiques -> {emb_interstellar.shape}")
         logger.info(f" dimensions des vecteurs : {embeddings_generer.dim_embedding}")

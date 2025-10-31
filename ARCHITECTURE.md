@@ -11,16 +11,16 @@
 - Export des données nettoyées
 
 ##### Générateur d'embeddings
-- Modèle : à compléter 
+- Modèle : SentenceTransformers (all-MiniLM-L6-v2)
 - Transformation texte en vecteurs
 - Traitement par lots
 
 ### MODULE 2: STOCKAGE VECTORIEL
 ##### Base Vectorielle
 - Index séparé par film (fightclub, interstellar)
-- Recherche par KNN 
+- 
 - Scalabilité horizontale possible(si obligation)
-##### Sockage des Méta-données 
+##### Stockage des Méta-données 
 - Mapping vecteur en méta-données 
 - Informations des critiques (id,user_id,film_id)
 - Accès rapide . 
@@ -38,8 +38,8 @@
 - Endpoint /recommendations
 - validation des requêtes 
 - gestion erreurs
-- logging et métriques 
-- documentation automatique
+- logging 
+- documentation 
 ##### client sensCritique
 - Intégration avec le frontend existant 
 - appels API REST
@@ -51,6 +51,16 @@
 ![diagramme sequence](docs/sequence.png)
 
 ## Choix Techniques
+##### Module 1: Traitement des données
+- Langage:Python 3.12
+- Modèle d'embedding: all-MiniLM-L6-v2 (Sentence-BERT)
+- dimension:384 (performance/précision)
+- Stockage intermediaire: NumPy et Pandas 
+##### Module 2: Stockage Vectoriel
+- similarité cosinus (produit scalaire)
+- implementer avec Sentence-Transformers 
+- Architecture de données: séparation physique par film
+- recherche linéaire \Theta(n \cdot d) pour 1000 critique apres nettoyage
 
 
 
