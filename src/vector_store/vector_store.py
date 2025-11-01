@@ -147,10 +147,11 @@ def main():
     try:
         print("LES CRITIQUES SIMILAIRES")
         #Initialisation
-        v_store =VectorStore()
-        data_dir = Path("../../data/processed")
+        v_store =VectorStore() # appel de la classe VectorStore
 
-        #charg. fight club
+        data_dir = Path("../../data/processed")# chemin du dossier , verifier la structure
+
+        #charg. fight club/ interstellar 
         v_store.load_files(
             "interstellar",data_dir/"interstellar_avec_embeddings.npy",
             data_dir/ "interstellar_avec_embeddings.pkl"
@@ -187,6 +188,13 @@ def main():
             #verification
         #end for
         print(f"\n Total: {compt} critiques similaires (similarité >=0.8) | {user_id}")
+
+        # Structure de l'embedding 
+        print("STRUCTURE DU DATAFRAMME: ")
+        print(f"Colonnes: {dataF_interstellar.columns.tolist()}")
+        print("\n2 premières lignes: ")
+        print(dataF_interstellar.head())
+
     except Exception as ex:
         logger.error(f"erreur dans main: {ex}")
         raise

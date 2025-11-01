@@ -19,6 +19,8 @@ from src.recommender_engine import RecommenderEngine
 engine_R = RecommenderEngine()
 recommandations = engine.get_similar_critiques(
 critique_id = "2607",
-film_id="fight_club"
+film_id="fight_club",
+k=10,
+scores_sim_min=0.8
 ) 
 ```
