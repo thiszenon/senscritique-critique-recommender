@@ -50,7 +50,7 @@ def clean_critiques_data(csv_path,film_name):
 
             #Verifier les colonnes jugées utiles
             if 'review_content' not in dataF.columns:
-                raise ValueError("col 'review_content' manquante")
+                raise ValueError("colonne 'review_content' manquante")
             # si la colonne review_content existe
 
             colonnes_utiles = [col  for col in ['id','review_content','user_id'] if col in  dataF.columns]
@@ -81,7 +81,7 @@ def clean_critiques_data(csv_path,film_name):
         # Gestion des user_id manquants
         user_id_nan_count = dataF_clean['user_id'].isna().sum() # le nombre d'user_id manquant
 
-        dataF_clean['user_id'] = dataF_clean['user_id'].fillna('anonyme') # remplacer les user_id par anonyme
+        dataF_clean['user_id'] = dataF_clean['user_id'].fillna('anonyme') # remplacer les user_id manquant par anonyme
 
         if user_id_nan_count > 0:
             logger.info(f"{user_id_nan_count} remplacés par anonymes")
@@ -116,7 +116,7 @@ def validate_cleaned_data(dataF,film_name):
     colonnes_requises = ['review_content','film_id'] # les deux colones importante 
     for col in colonnes_requises:
         if col not in dataF.columns:
-            raise ValueError(f"Colonne manquante: {col}")
+            raise ValueError(f"Colonne requise manquante: {col}")
         #end if
     #end for
 
@@ -140,15 +140,17 @@ def save_cleaned_data(dataF, film_name, output_dir = "../../data/processed"):
         - output_dir: chemin par defaut de la sauvegarde
     """
     try:
-        output_path = Path(output_dir)
-        output_path.mkdir(parents=True, exist_ok=True) # générer par ia 
+        # création du dossier du film
+        film_output_dir = Path(output_dir)/ film_name 
+        film_output_dir.mkdir(parents=True, exist_ok=True)
 
         # Sauvegarder en CSV
-        csv_path= output_path/f"{film_name}_cleaned.csv"
+        csv_path= film_output_dir / "cleaned_data.csv"
         dataF.to_csv(csv_path, index = False, encoding='utf-8')
 
         #Info
-        logger.info(f"Donées sauvergardées: ")
+        logger.info(f"Donées sauvergardées pour le film: '{film_name} ")
+        logger.info(f"dossier: {film_output_dir}")
         logger.info(f" {csv_path}")
 
         return csv_path

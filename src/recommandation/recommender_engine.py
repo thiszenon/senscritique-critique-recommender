@@ -35,7 +35,7 @@ class RecommanderEngine:
             vector_store: Instance de VectoreStore (module 2)
         """
         try:
-            self.vectore_store = vector_store
+            self.vector_store = vector_store
             logger.info("RecommenderEngine initialisé...")
         except Exception as ex:
             logger.error(f"erreur initialisation: {ex}")
@@ -52,14 +52,10 @@ class RecommanderEngine:
             index numerique ou None si pas trouvé
         """
         try:
-            #verifier que le film existe ou pas
-            if film_id not in self.vectore_store.dataF_emb_films:
-                logger.error(f"Film '{film_id}' non trouvé")
-                return None
-            #end if
-            dataF = self.vectore_store.dataF_emb_films[film_id] # recuperer le film_id du dataF
-            
-            #conversion de l'ID en int (structure du dataF...)
+            film_data = self.vector_store.load_film(film_id)
+            dataF_metadata = film_data['metadata']
+
+            #conversion de l'ID en int
             try:
                 critique_id_int = int(critque_id)
             except ValueError:
@@ -67,20 +63,21 @@ class RecommanderEngine:
                 return None
             
             #recherche la critique par ID
-            result =  dataF['id'] == critique_id_int
-            if not result.any():
-                logger.error(f"critique ID {critque_id} non trouvé , ref :{film_id}")
+            masque = dataF_metadata['id'] == critique_id_int
+            if not masque.any():
+                logger.error(f"critique ID {critque_id} non trouvée pour le film {film_id}")
                 return None
             #end if
-
-            index_trouver = dataF[result].index[0]
+            index_trouver = dataF_metadata[masque].index[0]
             logger.info(f"critique {critque_id} -> index {index_trouver}")
             return index_trouver
         except Exception as ex:
-            logger.error(f"erreur recherche critique {critque_id}: {ex}")
+            logger.error(f"erreur rcherche critique {critque_id}: {ex}")
             return None
         
     #end _get_index_with_id
+
+
 
     def find_similar(self, critique_id:str, film_id:str, k:int ,scores_sim_min:float =0.8) -> pd.DataFrame:
         """
@@ -99,18 +96,25 @@ class RecommanderEngine:
         try:
             logger.info(f"recherche similarité : critique={critique_id}, film={film_id}")
 
+            #verifier que le film existe
+            if not self.vector_store.film_exists(film_id):
+                raise ValueError(f"film '{film_id}' non dispo")
+            #end if
+
+
             # Trouver l'index de la critique de ref
             index_ref = self._get_index_with_id(film_id,critique_id)
             if index_ref is None:
                 raise ValueError(f"critique {critique_id} inexistante pour le film {film_id}")
             #end if
 
-            # Recuperer le vecteur de l'index_ref
-            vecteur_ref = self.vectore_store.emb_films[film_id][index_ref]
-            logger.info(f"vecteur de ref récupérer (index {index_ref})")
+            film_data = self.vector_store.load_film(film_id)
+            vecteur_ref = film_data['embeddings'][index_ref]
+
+            logger.info(f"vecteur de ref recupérer (index {index_ref})")
 
             #rechercher les critiques similaires 
-            scores, indices = self.vectore_store.search_similar_vectors(film_id,vecteur_ref,k)
+            scores, indices = self.vector_store.search_similar_vectors(film_id,vecteur_ref,k+1)
             logger.info(f"{len(scores)} similarités trouvées ...")
 
             # filtrer auto recommandation critique_ref
@@ -143,7 +147,7 @@ class RecommanderEngine:
             #end if
 
             # recuperer les metadata
-            critiques_similaires = self.vectore_store.get_critique_metadata(film_id,indices_finale)
+            critiques_similaires = self.vector_store.get_critique_metadata(film_id,indices_finale)
 
             # ajout des scores de similarités au dataF
             critiques_similaires['similarity_score'] = scores_final
@@ -161,30 +165,39 @@ def main():
         logger.info("Main recommandation")
         #import de la classe VectorStore
         sys.path.append(str(Path(__file__).parent.parent))
+
         from vector_store.vector_store import VectorStore
         vector_store = VectorStore() 
-
-        # les données
-        data_dir = "../../data/processed"
-        vector_store.load_files("fightclub",f"{data_dir}/fightclub_avec_embeddings.npy",f"{data_dir}/fightclub_avec_embeddings.pkl")
-
+        
         # Initialiser le moteur de recommandation
         engine_R = RecommanderEngine(vector_store)
 
-        # ID critique pour tester
-        dataF_fightclub = vector_store.dataF_emb_films["fightclub"]
-        critique_id_test = str(dataF_fightclub['id'].iloc[132]) # la critique 1
+        #verifier les films dispo
+        films = vector_store.list_available_films()
+        print(f"films dipo: {films}")
+
+        film_test = "interstellar"
+        if film_test not in films:
+            print(f"film '{film_test}' non disponible")
+            return
+        #end if
+        
+        film_data = vector_store.load_film(film_test)
+        dataF_metadata = film_data['metadata']
+
+        #ID critique pour tester
+        critique_id_test = str(dataF_metadata['id'].iloc[132])
 
         print(f"Test avec critique ID: {critique_id_test}")
-        print(f"\n La critique de ref: {dataF_fightclub['review_content'].iloc[132][:300]}... ")
+        print(f"\n La critique de ref: {dataF_metadata['review_content'].iloc[132][:300]}... ")
         print("\n")
 
         # la recherche
         resultats = engine_R.find_similar(
             critique_id=critique_id_test,
-            film_id="fightclub", #tester autre nom
-            k=10,
-            scores_sim_min=0.8# seuil de test à definir pour la production 
+            film_id=film_test, #tester autre nom
+            k=5, # pour le teste
+            scores_sim_min=0.7# seuil de test à definir pour la production 
         )
 
         # Afficher les resultats

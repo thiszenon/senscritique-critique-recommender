@@ -42,6 +42,8 @@ class Embedding:
 
         """
         try:
+            """TODO: Analyse du model à faire """
+
             logger.info(f"Chargement du modèle:{model_name}")
             self.model = SentenceTransformer(model_name) # charger le model
             self.dim_embedding = self.model.get_sentence_embedding_dimension() # la dimenson des vecteurs
@@ -94,7 +96,7 @@ class Embedding:
 
         Args:
             dataF : dataFrame avec les colonnes de texte
-            text_column: colonne avec le texte à encoder
+            text_column: colonne avec le texte à encoder ici : review_content
 
         Returns:
             tuple:(DataFrame avec les vecteurs, matrices d'emeddings)
@@ -123,6 +125,39 @@ class Embedding:
 
     #end process_dataF
 
+    def save_embeddings(self,embeddings,dataF_metadata, film_name, output_dir = "../../data/processed"):
+        """
+        Sauvegarde les vecteurs et métadonnées dans le dossier du film
+        Agrs:
+            - embeddings: numpy array des embeddings
+            - dataF_metadata: DataFrame des métadonnées
+            - film_name : nom du film
+            - output_dir: dossier de la sauvegarde
+        """
+        try:
+            # creation du dossier du film
+            film_output_dir = Path(output_dir) / film_name
+            film_output_dir.mkdir(parents=True, exist_ok=True)
+
+            # sauvegarde
+            embeddings_path = film_output_dir / "embeddings.npy"
+            dataF_metadata_path = film_output_dir / "metadata.pkl"
+
+            np.save(embeddings_path,embeddings)
+            dataF_metadata.to_pickle(dataF_metadata_path)
+
+            logger.info(f"embeddings sauvegardé pour '{film_name}':")
+            logger.info(f"dossier : {film_output_dir}")
+            logger.info(f"embeddings: {embeddings_path} ({len(embeddings)} vecteurs) ")
+            logger.info(f"métadonnées: {dataF_metadata_path} ({len(dataF_metadata)} critiques )")
+
+            return embeddings_path,dataF_metadata_path
+        except Exception as ex:
+            logger.error(f"erreur sauvergarde embeddings: {ex}")
+            raise
+    #end save_embeddings
+
+
 def main():
     try:
         logger.info("Generation des vecteurs")
@@ -148,23 +183,30 @@ def main():
 
         #sauvegarde
         logger.info("Sauvegarde des resultats")
-        output_dir = Path("../../data/processed") # lieu de la sauvegarde 
-        output_dir.mkdir(exist_ok=True)
 
-        dataF_fightclub_emb.to_pickle(output_dir/"fightclub_avec_embeddings.pkl")
-        dataF_interstellar_emb.to_pickle(output_dir/"interstellar_avec_embeddings.pkl")
+        #fightclub
+        embeddings_generer.save_embeddings(
+            embeddings = emb_fightclub,
+            dataF_metadata = dataF_fightclub_emb,
+            film_name = "fightclub",
+            output_dir = "../../data/processed"
+        )
 
-        #sauvegarde des matrices des vecteurs pour une utilisation avec FAISS ou pas 
-        np.save(output_dir/"fightclub_avec_embeddings.npy",emb_fightclub)
-        np.save(output_dir/ "interstellar_avec_embeddings.npy", emb_interstellar)
+        #interstellar
+        embeddings_generer.save_embeddings(
+            embeddings = emb_interstellar,
+            dataF_metadata = dataF_interstellar_emb,
+            film_name = "interstellar",
+            output_dir = "../../data/processed"
+        )
 
-        """TODO: Jo, n'oublie pas de faire le RAPPORT FINAL"""
+        """TODO: faire le RAPPORT FINAL"""
+
         logger.info(f" Fight club: {len(dataF_fightclub_emb)} critiques -> {emb_fightclub.shape}")
         logger.info(f" Interstellar: {len(dataF_interstellar_emb)} critiques -> {emb_interstellar.shape}")
         logger.info(f" dimensions des vecteurs : {embeddings_generer.dim_embedding}")
 
-        logger.info(f" fichiers sauvegardés dans : {output_dir}")
-
+        #visualiser
         ex_emb = emb_fightclub[0]
         logger.info(f" exemple des vecteurs: {ex_emb[:10]}...") # 10 premieres valeurs
 
@@ -176,7 +218,7 @@ def main():
 #end main
 
 if __name__ == "__main__":
-    main()
+    main()   
 
 
 

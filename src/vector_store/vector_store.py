@@ -28,16 +28,75 @@ class VectorStore:
         les critiques similaires .
     """
 
-    def __init__(self):
+    def __init__(self,data_path=None):
         try:
-            self.emb_films = {} # {film_id: vecteurs}
-            self.dataF_emb_films = {} # {film_id: dataF des vecteurs}
-            logger.info("stockage de vecteurs initialisé")
+            self.loaded_films = {} # {film_id: {"embeddings:..., "metadata":...}}
+            if data_path is None:
+                self.data_path = Path(__file__).parent.parent.parent / "data" / "processed"
+            else:
+                self.data_path = Path(data_path) # chemin où se trouve les données
+            logger.info("stockage de vecteurs initialisé et chargement des données")
             
         except Exception as ex:
             logger.error(f"erreur de l'initialisation :{ex}")
             raise 
     #end __init__
+
+    def film_exists(self,film_id:str) -> bool:
+        """verifier si un film existe avant le processus du chargement"""
+        film_path = self.data_path / film_id
+        return film_path.exists()
+    #end film_exists
+
+    def load_film(self,film_id:str):
+        """
+        Méthode qui charge un film s'il n'est pas déjà chargé
+
+        """
+        try:
+            if film_id not in self.loaded_films:
+                film_path = self.data_path / film_id
+
+                #verifier si le film existe
+                if not film_path.exists():
+                    raise ValueError(f"film '{film_id}' non trouvé dans {film_path}")
+                #end if
+
+                #chemin
+                embeddings_path = film_path /"embeddings.npy"
+                dataF_metadata_path = film_path / "metadata.pkl"
+
+                # verifier les fichiers chargés
+                if not embeddings_path.exists():
+                    raise ValueError(f"fichier embeddings manquant :{embeddings_path}")
+                #end if
+                if not dataF_metadata_path.exists():
+                    raise ValueError(f"fichier metadata manquant: {dataF_metadata_path}")
+                #end if
+
+                #chargement
+                embeddings = np.load(embeddings_path)
+                dataF_metadata = pd.read_pickle(dataF_metadata_path)
+
+                #verifier la cohérence des fichiers chargés
+                if len(embeddings) != len(dataF_metadata):
+                    raise ValueError("incoherence de données...")
+                #end if
+
+                #stockage
+                self.loaded_films[film_id] = {
+                    'embeddings': embeddings,
+                    'metadata': dataF_metadata
+                }
+                logger.info(f"film '{film_id}' chargé et comporte {len(embeddings)} critiques")
+
+            return self.loaded_films[film_id]
+            #end if
+        except Exception as ex:
+            logger.error(f"erreur chargement film '{film_id}' : {ex}")
+            raise
+    #end load_film
+
 
     def add_film(self,film_id,emb_films,dataF_emb_films):
         """
@@ -52,8 +111,10 @@ class VectorStore:
             if len(emb_films) != len(dataF_emb_films):
                 raise ValueError("Nombre de vecteurs diff de metadonnées(incompatible)")
             #end if
-            self.emb_films[film_id] = emb_films
-            self.dataF_emb_films[film_id]= dataF_emb_films
+            self.loaded_films['film_id']= {
+                'embeddings': emb_films,
+                'metadata': dataF_emb_films
+            }
             logger.info(f"film '{film_id}' ajouté et contient: {len(emb_films)} critiques")
         except Exception as ex:
             logger.error(f"erreur ajout du film {film_id}: {ex}")
@@ -73,16 +134,15 @@ class VectorStore:
         """
 
         try:
-            #verifier le film
-            if film_id not in self.emb_films: #voir méthode add_film
-                raise ValueError(f"film '{film_id}' non trouvé")
-            #end if
-            emb_films = self.emb_films[film_id] # on recup les vecteurs du film
+            #chargement du film
+            film_data = self.load_film(film_id)
+            embeddings = film_data['embeddings']
+
             #calcul des similarités cosinus
-            scores_similarity = util.cos_sim(vecteur_ref,emb_films)[0] # docs:
+            scores_similarity = util.cos_sim(vecteur_ref,embeddings)[0] # docs:
 
             #recup des k resultats
-            scores_k, indices_k = scores_similarity.topk(k=min(k,len(scores_similarity)))
+            scores_k, indices_k = scores_similarity.topk(k=min(k+1,len(scores_similarity)))
 
             logger.info(f"recherche '{film_id}' : {len(indices_k)} résultats trouvés")
 
@@ -104,15 +164,35 @@ class VectorStore:
 
         """
         try:
-            #verifier le film_id
-            if film_id not in self.dataF_emb_films:
-                raise ValueError(f"film '{film_id}' non trouvé ")
-            #end if
-            return self.dataF_emb_films[film_id].iloc[indices].copy() # 
+            film_data = self.load_film(film_id)
+            return film_data['metadata'].iloc[indices].copy() # 
         except Exception as ex:
             logger.error(f"erreur recup métadonnées du film '{film_id}': {ex}")
             raise
     #end get_critique_metadata
+
+    def get_film_metadata(self, film_id:str):
+        """recuperer toutes les metadata d'un film"""
+        try:
+            film_data = self.load_film(film_id)
+            return film_data['metadata']
+        except Exception as ex:
+            logger.error(f"erreur métadonnées du film : {film_id}: {ex}")
+            raise
+    #end get_film_metadata
+
+    #méthodes à ajouter :
+    # films disponibles
+    def list_available_films(self):
+        """Liste de tous les films disponibles"""
+        try:
+            films =[film.name for film in self.data_path.iterdir() if film.is_dir()] # à revoir si erreur
+            logger.info(f"films disponibles: {films}")
+            return films
+        except Exception as ex:
+            logger.error(f"erreur liste films: {ex}")
+            return []
+    #end list_available_films
 
     def load_files(self,film_id,path_vecteurs,path_metadata):
         """
@@ -147,54 +227,49 @@ def main():
     try:
         print("LES CRITIQUES SIMILAIRES")
         #Initialisation
-        v_store =VectorStore() # appel de la classe VectorStore
+        vector_store =VectorStore() # appel de la classe VectorStore
 
-        data_dir = Path("../../data/processed")# chemin du dossier , verifier la structure
+        # les films dispo
 
-        #charg. fight club/ interstellar 
-        v_store.load_files(
-            "interstellar",data_dir/"interstellar_avec_embeddings.npy",
-            data_dir/ "interstellar_avec_embeddings.pkl"
-        )
-        #critique de ref
-        critique_ref_index=30
-        dataF_interstellar = v_store.dataF_emb_films["interstellar"]
-        critique_ref = dataF_interstellar.iloc[critique_ref_index] # premiere critique
-        print(f"critique de ref, index({critique_ref_index})")
-        print(f"{critique_ref['review_content'][:200]}...")
-        #print(f"note: {critique_ref['note']}")
-        print(f"Film: {critique_ref['film_id']}")
+        films= vector_store.list_available_films()
+        print(f"films disponibles: {films}")
 
-        # critique similaire
-        vecteur_ref = v_store.emb_films["interstellar"][critique_ref_index]
-        scores, indices = v_store.search_similar_vectors("interstellar",vecteur_ref,k=10)
+        film_test = "fightclub1" 
 
-        print("10 critiques\n")
-        compt =0
-        user_id = [] #ajouter les user_id pour verifier 
+        if film_test:
+            print(f"\n Test avec le film : {film_test}")
+            #chargement
+            film_data = vector_store.load_film(film_test)
+            dataF_metadata = film_data['metadata']
 
-        for i, (score, idx) in enumerate(zip(scores,indices)):
-            if score !=1.0:
-                compt +=1
-                critique_sim = v_store.get_critique_metadata("interstellar",[idx]).iloc[0]
-                print(f"Resultat numero {i+1}")
-                print(f"similarité: {score:.4f}")
-                print(f"index: {idx}")
-                print(f"contenu : {critique_sim['review_content'][:200]}...")
-                print(f" Film: {critique_sim['film_id']}")
-                user_id.append(critique_sim['user_id'])
-                print(f"User ID: {critique_sim['user_id']}")
-            #end if 
-            #verification
-        #end for
-        print(f"\n Total: {compt} critiques similaires (similarité >=0.8) | {user_id}")
+            #critique de ref
+            critique_ref_index = 200 # essaie d'autre après 
+            critique_ref = dataF_metadata.iloc[critique_ref_index]
+            print(f"critique de ref (index {critique_ref_index}):")
+            print(f"Contenu: {critique_ref['review_content'][:150]}")
+            print(f"Film : {critique_ref['film_id']}")
 
-        # Structure de l'embedding 
-        print("STRUCTURE DU DATAFRAMME: ")
-        print(f"Colonnes: {dataF_interstellar.columns.tolist()}")
-        print("\n2 premières lignes: ")
-        print(dataF_interstellar.head())
+            #recherche similarités
+            vecteur_ref  = film_data['embeddings'][critique_ref_index]
 
+            scores, indices = vector_store.search_similar_vectors(film_test,vecteur_ref,k=10)
+            print(f"\n {len(scores)} critiques similaires trouvés:")
+            for i, (score,idx) in enumerate(zip(scores,indices)):
+                if idx != critique_ref_index : # auto-recommandation exclue
+                    critique_sim = vector_store.get_critique_metadata(film_test,[idx]).iloc[0]
+                    print(f"{i} . similarité: {score:.4f}")
+                    print(f"contenu: {critique_sim['review_content'][:150]}...")
+                    print(f"user_id: {critique_sim['user_id']}")
+                #end if
+            #end for
+
+            #structure de données
+            print(f"\n Structure du DataFrame: ")
+            print(f"Colonnes: {dataF_metadata.columns.tolist()}")
+            print(f"nombre de critiques: {len(dataF_metadata)}")
+        #end if
+        else:
+            print(f" {film_test} pas dispo")
     except Exception as ex:
         logger.error(f"erreur dans main: {ex}")
         raise

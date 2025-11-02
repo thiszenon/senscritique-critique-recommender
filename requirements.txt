@@ -1,14 +1,15 @@
-pandas==2.1.3
-numpy >= 1.24.0
+pandas>=1.5.0
+numpy >= 1.21.0
 setuptools >= 65.0.0
 
 # modèle & embeddings (vecteurs)
 sentence-transformers == 2.2.2
-faiss-cpu == 1.8.0
+
 
 # API 
 fastapi == 0.104.1
 uvicorn == 0.23.2
+pydantic == 2.5.0
 
 
 # tests
