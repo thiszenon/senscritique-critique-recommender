@@ -44,7 +44,8 @@ class VectorStore:
 
     def film_exists(self,film_id:str) -> bool:
         """verifier si un film existe avant le processus du chargement"""
-        film_path = self.data_path / film_id
+        film_id_normalizer = film_id.lower().strip()
+        film_path = self.data_path / film_id_normalizer
         return film_path.exists()
     #end film_exists
 
@@ -54,7 +55,10 @@ class VectorStore:
 
         """
         try:
-            if film_id not in self.loaded_films:
+            #Normaloisation du nom de films 
+            film_id_normaliser = film_id.lower().strip()
+
+            if film_id_normaliser not in self.loaded_films:
                 film_path = self.data_path / film_id
 
                 #verifier si le film existe

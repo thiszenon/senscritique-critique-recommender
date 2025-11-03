@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
+#configuration
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s- %(message)s'
@@ -23,13 +24,14 @@ def get_recommender():
     """
     initialisation du système
     Returns:
-        RecommanderEngine : moteur de recommandation
+        recommander_engine : moteur de recommandation
     """
 
     try:
         logger.info("Initialisation du système ...")
 
-        # init le stockage vecto
+        # initialisation de la class  VectorStore
+
         vector_store = VectorStore()
         logger.info("vectorStore initialisé...")
 
@@ -37,12 +39,13 @@ def get_recommender():
         engine_R = RecommanderEngine(vector_store)
         logger.info("RecommanderEngine initialisé...")
 
-        # films dispo 
+        # films disponible
         films = vector_store.list_available_films()
-        logger.info("Films dispo...")
+        logger.info("Films disponible ")
 
         logger.info("systeme prêt")
         return engine_R
+    
     except Exception as ex:
         logger.error(f"erreur initialiation: {ex}")
         raise

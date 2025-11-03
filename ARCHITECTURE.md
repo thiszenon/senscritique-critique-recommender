@@ -1,9 +1,12 @@
-# Architecture Système 
+# Architecture Système - Recommandation de critiques
+---
 
-## DIAGRAMME DE L'ARCHITECTURE
+## Diagramme de l'Architecture
 ![System Design](docs/architecture.png)
 
-## MODULES METIER
+---
+## Modules Métier
+
 ### MODULE 1: Traitement des données
 - Chargement des colonnes utiles (id,review_content,user_id)
 - Nettoyage (NaN, textes vides, doublons)
@@ -15,53 +18,78 @@
 - Transformation texte en vecteurs
 - Traitement par lots
 
-### MODULE 2: STOCKAGE VECTORIEL
+### MODULE 2: Stockage Vectoriel
+
 ##### Base Vectorielle
 - Index séparé par film (fightclub, interstellar)
-- 
-- Scalabilité horizontale possible(si obligation)
+
 ##### Stockage des Méta-données 
 - Mapping vecteur en méta-données 
 - Informations des critiques (id,user_id,film_id)
 - Accès rapide . 
 
-### MODULE 3: RECOMMANDATION 
+### MODULE 3: Recommandation
+
+
 ##### Logique métier principale
 - récupération de l'embedding source
 - recherche des similarités (même film dans notre cas)
 - Filtrage des auto-recommandations 
-- calcul des sources de pertinences
+- calcul des scores de similarités 
 - Formatage des résultats (à étudier plus en détails)
 
-### MODULE 4: API & CLIENT
+### MODULE 4: API & Client
+
+
 ##### Serveur FastAPI
 - Endpoint /recommendations
 - validation des requêtes 
 - gestion erreurs
 - logging 
 - documentation 
+
 ##### client sensCritique
 - Intégration avec le frontend existant 
 - appels API REST
 - affichage des résultats 
 
-### RÉSULTATS 
+---
 
 ## Flux de Données
-![diagramme sequence](docs/sequence.png)
+![Diagramme sequence](docs/sequence.png)
+
+---
 
 ## Choix Techniques
+
 ##### Module 1: Traitement des données
-- Langage:Python 3.12
-- Modèle d'embedding: all-MiniLM-L6-v2 (Sentence-BERT)
-- dimension:384 (performance/précision)
-- Stockage intermediaire: NumPy et Pandas 
+- **Langage**:Python 3.12
+- **Modèle d'embedding**: all-MiniLM-L6-v2 (Sentence-BERT)
+- **dimension**: 384 (performance/précision)
+- **Stockage intermediaire**: NumPy et Pandas 
+
 ##### Module 2: Stockage Vectoriel
-- similarité cosinus (produit scalaire)
-- implementer avec Sentence-Transformers 
-- Architecture de données: séparation physique par film
-- recherche linéaire \Theta(n \cdot d) pour 1000 critique apres nettoyage
+- **similarité**: cosinus (produit scalaire)
+- **implémentation**: Sentence-Transformers 
+- **Architecture de données**: séparation  par film
+- **recherche**: linéaire O(n.d) pour 1000 critique apres nettoyage
 
+##### Module 3: Moteur de recommandation
+- **Filtrage**: auto-recommandation exclue
+- **Seuillage**: similarité minimum configurable
+- **Limitation**: nombre de résultats  (k) parametre.
 
+##### Module 4: API (Pas demandé mais ...)
+
+- **Framework**: FastAPI
+- ** Validation**: Pydantic
+- **Documentation** : Swagger auto-generée
+- **Logging**: structure simple et informatif
 
 ## Evolutivité
+- Architecture modulaire
+- Chargement dynamique des films
+- Données organisée par film
+
+---
+*Documenation technique - Test SensCritique*

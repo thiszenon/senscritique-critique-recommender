@@ -6,7 +6,7 @@ Auteur: Jo kabonga
 Date: 2/11/2025
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field # param field generer par ia
 from typing import List, Optional
 
 class RecommandationRequest(BaseModel):
@@ -21,7 +21,7 @@ class RecommandationRequest(BaseModel):
 class CritiqueReference(BaseModel):
     """modele pour la critique de ref"""
     id:str
-    film_id:str
+    film:str
     user_id: Optional[str] = None #ou anonyme à revoir... 
 
 class CritiqueResponse(BaseModel):
@@ -31,10 +31,10 @@ class CritiqueResponse(BaseModel):
     score_similarity:float
     review_content:str
 
-class RecommandationResponse(BaseModel):
+class RecommendationResponse(BaseModel):
     """ modele pour la reponse complete de recommandation"""
-    critique_ref: CritiqueReference 
-    recommandations: List[CritiqueResponse]
+    critique_reference: CritiqueReference 
+    recommendations: List[CritiqueResponse]
     metadata: dict
 
 

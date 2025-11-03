@@ -12,7 +12,7 @@ import time
 from typing import List
 
 # importation des modules
-from src.schemas.models import CritiqueReference, RecommandationRequest, RecommandationResponse,CritiqueResponse
+from src.schemas.models import CritiqueReference, RecommandationRequest, RecommendationResponse,CritiqueResponse
 from src.api.dependencies import recommender_engine
 
 #Config du logging
@@ -29,7 +29,7 @@ app = FastAPI(
     description = "API de recommandation de critiques similaires "
 )
 
-@app.post("/recommendations", response_model=RecommandationResponse)
+@app.post("/recommendations", response_model=RecommendationResponse)
 def get_recommendations(request: RecommandationRequest):
     """
     endpoint principal - retourne les critiques à une critique donnée
@@ -49,17 +49,18 @@ def get_recommendations(request: RecommandationRequest):
         process_time = time.time() - start_time
 
         # recup les infos
-        film_data = recommender_engine.vector_store.load_film(request.film_id)
+        film_id_normalizer = request.film_id.lower().strip()
+        film_data = recommender_engine.vector_store.load_film(film_id_normalizer)
         dataF_metadata = film_data['metadata']
 
         #trouver la critique de ref
         critique_ref = dataF_metadata[dataF_metadata['id'] == int(request.critique_id)].iloc[0]
 
         #construction de la rep
-        response = RecommandationResponse(
-            critique_ref = CritiqueReference(
+        response = RecommendationResponse(
+            critique_reference = CritiqueReference(
                 id=request.critique_id,
-                film_id=request.film_id,
+                film=request.film_id,
                 user_id = str(critique_ref['user_id'])
             ),
 

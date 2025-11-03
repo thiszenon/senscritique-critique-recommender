@@ -52,6 +52,8 @@ class RecommanderEngine:
             index numerique ou None si pas trouvé
         """
         try:
+            #normaliser le nom du film
+            film_id_normalizer = film_id.lower().strip()
             film_data = self.vector_store.load_film(film_id)
             dataF_metadata = film_data['metadata']
 
@@ -94,27 +96,29 @@ class RecommanderEngine:
 
         """
         try:
-            logger.info(f"recherche similarité : critique={critique_id}, film={film_id}")
+            #normaliser le nom du film
+            film_id_normalizer = film_id.lower().strip()
+            logger.info(f"recherche similarité : critique={critique_id}, film={film_id_normalizer}")
 
             #verifier que le film existe
-            if not self.vector_store.film_exists(film_id):
+            if not self.vector_store.film_exists(film_id_normalizer):
                 raise ValueError(f"film '{film_id}' non dispo")
             #end if
 
 
             # Trouver l'index de la critique de ref
-            index_ref = self._get_index_with_id(film_id,critique_id)
+            index_ref = self._get_index_with_id(film_id_normalizer,critique_id)
             if index_ref is None:
                 raise ValueError(f"critique {critique_id} inexistante pour le film {film_id}")
             #end if
 
-            film_data = self.vector_store.load_film(film_id)
+            film_data = self.vector_store.load_film(film_id_normalizer)
             vecteur_ref = film_data['embeddings'][index_ref]
 
             logger.info(f"vecteur de ref recupérer (index {index_ref})")
 
             #rechercher les critiques similaires 
-            scores, indices = self.vector_store.search_similar_vectors(film_id,vecteur_ref,k+1)
+            scores, indices = self.vector_store.search_similar_vectors(film_id_normalizer,vecteur_ref,k+1)
             logger.info(f"{len(scores)} similarités trouvées ...")
 
             # filtrer auto recommandation critique_ref
@@ -147,7 +151,7 @@ class RecommanderEngine:
             #end if
 
             # recuperer les metadata
-            critiques_similaires = self.vector_store.get_critique_metadata(film_id,indices_finale)
+            critiques_similaires = self.vector_store.get_critique_metadata(film_id_normalizer,indices_finale)
 
             # ajout des scores de similarités au dataF
             critiques_similaires['similarity_score'] = scores_final

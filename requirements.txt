@@ -1,9 +1,14 @@
+# Data processing
+
 pandas>=1.5.0
 numpy >= 1.21.0
 setuptools >= 65.0.0
 
 # modèle & embeddings (vecteurs)
-sentence-transformers == 2.2.2
+huggingface_hub >=0.20.0
+transformers >=4.30.0
+sentence-transformers == 2.3.0
+torch >=2.0.0
 
 
 # API 
@@ -11,8 +16,7 @@ fastapi == 0.104.1
 uvicorn == 0.23.2
 pydantic == 2.5.0
 
-
-# tests
+# Tests
 pytest == 8.4.2
 
 
