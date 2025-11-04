@@ -72,7 +72,7 @@
 - **similarité**: cosinus (produit scalaire)
 - **implémentation**: Sentence-Transformers 
 - **Architecture de données**: séparation  par film
-- **recherche**: linéaire O(n.d) pour 1000 critique apres nettoyage
+- **recherche**: linéaire Θ(n · d) pour 1000 critique apres nettoyage
 
 ##### Module 3: Moteur de recommandation
 - **Filtrage**: auto-recommandation exclue

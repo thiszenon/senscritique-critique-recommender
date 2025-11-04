@@ -7,7 +7,7 @@ Permettre aux utilisateurs de découvrir des critiques similaires pendant la lec
 
 
 ## Architecture 
-** [Voir l'artitecture detaillée et flux de données ici](ARCHITECTURE.md)
+**[Voir l'artitecture detaillée et flux de données ici](ARCHITECTURE.md)**
 
 ![System Design](docs/architecture.png)
 
